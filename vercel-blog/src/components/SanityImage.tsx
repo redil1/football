@@ -14,7 +14,7 @@ import type {
 const builder = imageUrlBuilder(client);
 
 // Define a type for an image object where the asset is fully resolved
-interface ResolvedSanityImage extends Omit<SanityImageType, 'asset'> {
+export interface ResolvedSanityImage extends Omit<SanityImageType, 'asset'> {
   asset: SanityAsset; // Expects the full asset document
   crop?: ImageCrop;
   hotspot?: ImageHotspot;

@@ -1,7 +1,8 @@
 import CodeBlock from './CodeBlock';
-import SanityImage from './SanityImage'; // For rendering images within Portable Text, if needed
+import SanityImage, { type ResolvedSanityImage } from './SanityImage'; // Import component and its specific image type
 import type { PortableTextComponents } from '@portabletext/react';
-import type { Image as SanityImageType } from 'sanity'; // Import SanityImageType
+// SanityImageType might still be useful for other non-resolved image scenarios if any
+import type { Image as SanityImageType } from 'sanity'; 
 import Link from 'next/link';
 
 // Define components for various Portable Text block types
@@ -9,8 +10,8 @@ export const ptComponents: PortableTextComponents = {
   types: {
     code: CodeBlock, // Use our custom CodeBlock component for 'code' type
     // You can add more custom types here, for example, for images within Portable Text:
-    image: ({ value }: { value: SanityImageType & { alt?: string; caption?: string } }) => {
-      if (!value?.asset?._ref) {
+    image: ({ value }: { value: ResolvedSanityImage & { alt?: string; caption?: string } }) => { // Use the imported type, add alt/caption
+      if (!value?.asset?.url) { // Check for a property that exists on a resolved asset, like URL or _id
         return null;
       }
       return (
