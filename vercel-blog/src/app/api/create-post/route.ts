@@ -10,10 +10,27 @@ interface CreatePostPayload {
   coverImageRef?: string; // The _id of the image asset (e.g., "image-xxxx-jpg")
   publishedAt?: string;
   excerpt?: string;
-  body?: any[]; // Portable Text array
+  body?: Record<string, unknown>[]; // Portable Text array
   // Add other fields as needed by your frontend client
 }
 
+// Define the structure for the Sanity post document being created
+interface SanityPostDocument {
+  _type: 'post';
+  title: string;
+  slug: { _type: 'slug'; current: string };
+  author: { _type: 'reference'; _ref: string };
+  publishedAt: string;
+  excerpt: string;
+  body: Record<string, unknown>[];
+  coverImage?: {
+    _type: 'image';
+    asset: {
+      _type: 'reference';
+      _ref: string;
+    };
+  };
+}
 
 export async function POST(request: Request) {
   // 1. Authentication/Authorization (CRITICAL FOR PRODUCTION)
@@ -31,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Construct the Sanity document
-    const postDocument: any = {
+    const postDocument: SanityPostDocument = {
       _type: 'post',
       title: payload.title,
       slug: { _type: 'slug', current: payload.slug },
