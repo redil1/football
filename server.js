@@ -561,14 +561,23 @@ app.get('/', async (req, res /*, next*/) => {
   // Real users redirected to external site (handled by the else block above)
 });
 
-// --- SECTION: SERVER START ---
-// Ensure Next.js is prepared before starting the server or exporting the handler
-appNext.prepare().then(async () => { // Added async here
-  logger.info('Next.js app prepared successfully.');
+// --- SECTION: SERVER START & EXPORT ---
+let serverlessHandler;
 
-  // Temporarily bypass environment check for app.listen and run directly
-  const PORT = process.env.PORT || 3000;
-    await setupDemoContent();
+async function initializeApp() {
+  await appNext.prepare();
+  logger.info('Next.js app prepared successfully.');
+  await setupDemoContent(); // Setup demo content after Next.js is ready
+  serverlessHandler = serverless(app); // Initialize serverless handler AFTER app is fully configured
+}
+
+// Initialize the app immediately
+const appInitializationPromise = initializeApp();
+
+// For local development (Vercel CLI `vercel dev` or `node server.js`)
+if (!process.env.VERCEL) { // Check if NOT running in Vercel production
+  appInitializationPromise.then(() => {
+    const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       logger.info(`"Near Production-Grade" Demo Cloaking Server running on http://localhost:${PORT}`);
       logger.info(`Production-like mode: ${IS_PRODUCTION_LIKE}, Debug mode: ${DEBUG_MODE}, JSON Logs: ${JSON_LOGS}`);
@@ -582,11 +591,23 @@ appNext.prepare().then(async () => { // Added async here
       console.log("4. Unverified Googlebot UA (should get user flow if IP doesn't rDNS to Google): curl -A \"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\" -H \"X-Forwarded-For: 1.2.3.4\" http://localhost:3000/");
       console.log("--- Set DEBUG_MODE=true and/or JSON_LOGS=true env vars for more verbose/structured logs. ---\n");
     });
-  // Removed IIFE and conditional serverless export for now
-}).catch(ex => {
-  logger.error('Error preparing Next.js app:', ex.stack);
-  process.exit(1);
-});
+  }).catch(ex => {
+    logger.error('Error during local server startup:', ex.stack);
+    process.exit(1);
+  });
+}
+
+// Serverless export for Vercel
+module.exports.handler = async (event, context) => {
+  await appInitializationPromise; // Ensure app is initialized before handling requests
+  if (!serverlessHandler) {
+    // Fallback initialization if somehow the above didn't complete or wasn't awaited at the module level for all invocations
+    // This can happen in some cold start scenarios or if the module is re-required without hitting the top-level appInitializationPromise fully.
+    logger.warn('Re-running app initialization within handler. This should be rare.');
+    await initializeApp(); 
+  }
+  return serverlessHandler(event, context);
+};
 
 // --- Serve Admin Dashboard and API ---
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
