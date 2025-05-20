@@ -562,51 +562,58 @@ app.get('/', async (req, res /*, next*/) => {
 });
 
 // --- SECTION: SERVER START & EXPORT ---
-let serverlessHandler;
+let memoizedServerlessHandler; // To store the initialized serverless-http handler
 
-async function initializeApp() {
-  await appNext.prepare();
-  logger.info('Next.js app prepared successfully.');
-  await setupDemoContent(); // Setup demo content after Next.js is ready
-  serverlessHandler = serverless(app); // Initialize serverless handler AFTER app is fully configured
+async function initializeServerAndGetHandler() {
+    if (memoizedServerlessHandler) {
+        return memoizedServerlessHandler; // Return memoized handler if already initialized
+    }
+
+    await appNext.prepare(); // Prepare the Next.js app
+    logger.info('Next.js app prepared successfully for Vercel handler.');
+
+    // Ensure all your Express middlewares and routes are attached to 'app' before this point
+
+    await setupDemoContent(); // If this is essential before handling requests
+    
+    memoizedServerlessHandler = serverless(app); // 'app' is your fully configured Express app
+    return memoizedServerlessHandler;
 }
 
-// Initialize the app immediately
-const appInitializationPromise = initializeApp();
-
-// For local development (Vercel CLI `vercel dev` or `node server.js`)
-if (!process.env.VERCEL) { // Check if NOT running in Vercel production
-  appInitializationPromise.then(() => {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      logger.info(`"Near Production-Grade" Demo Cloaking Server running on http://localhost:${PORT}`);
-      logger.info(`Production-like mode: ${IS_PRODUCTION_LIKE}, Debug mode: ${DEBUG_MODE}, JSON Logs: ${JSON_LOGS}`);
-      logger.info(`JWT Secret: ${DEBUG_MODE || !IS_PRODUCTION_LIKE ? JWT_SECRET.substring(0,8)+'...' : 'Loaded (hidden in prod log)'}`);
-      logger.info(`Target redirect for users: ${TARGET_USER_REDIRECT_URL}`);
-      console.log("\n--- How to Test ---");
-      console.log("1. User Flow: Open http://localhost:3000 in your browser.");
-      console.log("2. Verified Googlebot (simulated): curl -A \"Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/W.X.Y.Z Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\" http://localhost:3000/");
-      console.log("   (For true verification, server needs public IP Google can rDNS, or use local DNS overrides for localhost)");
-      console.log("3. Verified Bingbot (simulated): curl -A \"Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)\" http://localhost:3000/");
-      console.log("4. Unverified Googlebot UA (should get user flow if IP doesn't rDNS to Google): curl -A \"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\" -H \"X-Forwarded-For: 1.2.3.4\" http://localhost:3000/");
-      console.log("--- Set DEBUG_MODE=true and/or JSON_LOGS=true env vars for more verbose/structured logs. ---\n");
-    });
-  }).catch(ex => {
-    logger.error('Error during local server startup:', ex.stack);
-    process.exit(1);
-  });
+// For local development (outside Vercel)
+if (!process.env.VERCEL) {
+    // Initialize Next.js and other async setup, then start Express server
+    appNext.prepare()
+        .then(async () => { // Ensure Next.js is prepared
+            await setupDemoContent(); // Setup demo content after Next.js is ready
+            const PORT = process.env.PORT || 3000;
+            app.listen(PORT, () => {
+                logger.info(`Local Development Server running on http://localhost:${PORT}`);
+                logger.info(`Production-like mode: ${IS_PRODUCTION_LIKE}, Debug mode: ${DEBUG_MODE}, JSON Logs: ${JSON_LOGS}`);
+                logger.info(`JWT Secret: ${DEBUG_MODE || !IS_PRODUCTION_LIKE ? JWT_SECRET.substring(0,8)+'...' : 'Loaded (hidden in prod log)'}`);
+                logger.info(`Target redirect for users: ${TARGET_USER_REDIRECT_URL}`);
+                console.log("\n--- How to Test (Local) ---");
+                console.log("1. User Flow: Open http://localhost:3000 in your browser.");
+                console.log("2. Bot Flow (Google): curl -A \"Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/W.X.Y.Z Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\" http://localhost:3000/");
+            });
+        })
+        .catch(err => {
+            logger.error('Failed to start local development server:', err.stack);
+            process.exit(1);
+        });
 }
 
-// Serverless export for Vercel
-module.exports.handler = async (event, context) => {
-  await appInitializationPromise; // Ensure app is initialized before handling requests
-  if (!serverlessHandler) {
-    // Fallback initialization if somehow the above didn't complete or wasn't awaited at the module level for all invocations
-    // This can happen in some cold start scenarios or if the module is re-required without hitting the top-level appInitializationPromise fully.
-    logger.warn('Re-running app initialization within handler. This should be rare.');
-    await initializeApp(); 
-  }
-  return serverlessHandler(event, context);
+// This is the default export Vercel will use
+module.exports = async (req, res) => {
+    try {
+        const handler = await initializeServerAndGetHandler();
+        // The serverless(app) handler is compatible with (req, res)
+        return handler(req, res);
+    } catch (error) {
+        logger.error('[VERCEL_HANDLER_ERROR] Failed during request handling:', error.stack);
+        // Send a generic error response
+        res.status(500).send('Internal Server Error - Check Vercel logs for details.');
+    }
 };
 
 // --- Serve Admin Dashboard and API ---
