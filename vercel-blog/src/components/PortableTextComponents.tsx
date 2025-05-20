@@ -1,8 +1,6 @@
 import CodeBlock from './CodeBlock';
 import SanityImage, { type ResolvedSanityImage } from './SanityImage'; // Import component and its specific image type
 import type { PortableTextComponents } from '@portabletext/react';
-// SanityImageType might still be useful for other non-resolved image scenarios if any
-import type { Image as SanityImageType } from 'sanity'; 
 import Link from 'next/link';
 
 // Define components for various Portable Text block types
