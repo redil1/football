@@ -1,0 +1,4 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>{{title}} - Demo Blog</title><meta name="description" content="{{description}}"></head>
+       <body><h1>{{title}}</h1><p><em>Serving content from: {{url}}</em></p><hr>
+       {{#posts}}<article><h2><a href="/blog/{{slug}}">{{title}}</a></h2><p>{{excerpt}}</p><small>Published on: {{formattedDate}}</small><br/>{{#tags}}<span>[{{this}}] </span>{{/tags}}</article><hr>{{/posts}}
+       {{^posts}}<p>No posts found.</p>{{/posts}}</body></html>

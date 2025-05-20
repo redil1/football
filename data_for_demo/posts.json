@@ -1,0 +1,58 @@
+{
+  "posts": [
+    {
+      "id": "1",
+      "slug": "my-first-post",
+      "title": "My First Demo Post",
+      "excerpt": "This is a short summary of the first post, useful for listings.",
+      "content": "<p>This is the <strong>full HTML content</strong> of the <em>first</em> demonstration post. It can include various elements like lists:</p><ul><li>Point one</li><li>Point two</li></ul>",
+      "date": "2025-05-18T19:35:29.364Z",
+      "published": true,
+      "tags": [
+        "demo",
+        "introduction",
+        "example"
+      ],
+      "seo": {
+        "metaDescription": "An amazing first post for demonstration purposes.",
+        "keywords": "demo, first, example, nodejs"
+      }
+    },
+    {
+      "id": "2",
+      "slug": "another-exciting-topic",
+      "title": "Another Exciting Topic Revealed",
+      "excerpt": "Exploring another interesting topic with some key takeaways.",
+      "content": "<p>Delving deeper into more content. This post discusses <code>code snippets</code> and perhaps even <pre>multi-line code blocks</pre>.</p><blockquote>A blockquote for emphasis.</blockquote>",
+      "date": "2025-05-20T19:35:29.364Z",
+      "published": true,
+      "tags": [
+        "demo",
+        "updates",
+        "tech"
+      ],
+      "seo": {
+        "metaDescription": "A fascinating look into another topic, showcasing different content types.",
+        "keywords": "demo, updates, fascinating, technology"
+      }
+    }
+  ],
+  "categories": [
+    {
+      "name": "General Info",
+      "slug": "general"
+    },
+    {
+      "name": "Tech Updates",
+      "slug": "tech"
+    }
+  ],
+  "tagsList": [
+    "demo",
+    "introduction",
+    "example",
+    "updates",
+    "tech",
+    "nodejs"
+  ]
+}
