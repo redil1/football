@@ -102,5 +102,5 @@ export default async function HomePage() {
 }
 
 // Revalidate this page every 60 seconds (Incremental Static Regeneration)
-export const revalidate = 60;
+export const revalidate = 0;
 
