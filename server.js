@@ -151,18 +151,36 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      ...(helmet.contentSecurityPolicy.getDefaultDirectives && helmet.contentSecurityPolicy.getDefaultDirectives()),
-      'default-src': ["'self'"],
-      'script-src': ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
-      'style-src': ["'self'", "'unsafe-inline'"], // Loader uses inline styles for simplicity
-      'img-src': ["'self'", "data:", "blob:"],
-      'frame-ancestors': ["'none'"],
+// --- FIX: Relax CSP for Next.js and SSR routes to allow hydration ---
+app.use((req, res, next) => {
+  // List of routes that need relaxed CSP for Next.js hydration
+  const nextJsPaths = [
+    '/', '/blog', '/blog/', '/home', '/dev-view-blog',
+  ];
+  // Also relax for all /_next/* and /post/* and /blog/:slug
+  const isNextAsset = req.path.startsWith('/_next/');
+  const isPostPage = req.path.startsWith('/post/');
+  const isBlogSlug = /^\/blog\/[^/]+$/.test(req.path);
+  const isRelaxed = nextJsPaths.includes(req.path) || isNextAsset || isPostPage || isBlogSlug;
+  if (isRelaxed) {
+    // Allow unsafe-inline for script-src (or remove script-src entirely) for Next.js hydration
+    res.setHeader('Content-Security-Policy', `default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-${res.locals.nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-ancestors 'none'`);
+    return next();
+  }
+  // For all other routes, use strict helmet CSP
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...(helmet.contentSecurityPolicy.getDefaultDirectives && helmet.contentSecurityPolicy.getDefaultDirectives()),
+        'default-src': ["'self'"],
+        'script-src': ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", "data:", "blob:"],
+        'frame-ancestors': ["'none'"],
+      },
     },
-  },
-}));
+  })(req, res, next);
+});
 app.use(cors({ origin: false }));
 
 // --- SECTION: JWT KEY SERVICE ---
