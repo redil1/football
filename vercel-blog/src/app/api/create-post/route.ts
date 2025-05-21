@@ -1,6 +1,6 @@
 // src/app/api/create-post/route.ts
 import { NextResponse } from 'next/server';
-import { writeClient } from '@/lib/sanity.client'; // Use the new write client
+import { writeClient } from '@/lib/sanity.client'; // Remove .ts extension for compatibility
 
 // Define the expected request body structure for creating a post
 interface CreatePostPayload {
