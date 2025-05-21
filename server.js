@@ -163,8 +163,8 @@ app.use((req, res, next) => {
   const isBlogSlug = /^\/blog\/[^/]+$/.test(req.path);
   const isRelaxed = nextJsPaths.includes(req.path) || isNextAsset || isPostPage || isBlogSlug;
   if (isRelaxed) {
-    // Allow unsafe-inline for script-src (or remove script-src entirely) for Next.js hydration
-    res.setHeader('Content-Security-Policy', `default-src 'self'; script-src 'self' 'unsafe-inline' 'nonce-${res.locals.nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-ancestors 'none'`);
+    // FIX: Remove nonce from script-src for Next.js hydration compatibility
+    res.setHeader('Content-Security-Policy', `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; frame-ancestors 'none'`);
     return next();
   }
   // For all other routes, use strict helmet CSP
