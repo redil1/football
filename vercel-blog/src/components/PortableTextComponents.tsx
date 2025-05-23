@@ -1,13 +1,19 @@
 import CodeBlock from './CodeBlock';
 import SanityImage, { type ResolvedSanityImage } from './SanityImage'; // Import component and its specific image type
 import type { PortableTextComponents } from '@portabletext/react';
-import Link from 'next/link';
+import FAQBlock from './FAQBlock';
+import CalloutBlock from './CalloutBlock';
+import CustomCodeBlock from './CustomCodeBlock';
 
 // Define components for various Portable Text block types
 export const ptComponents: PortableTextComponents = {
   types: {
     code: CodeBlock, // Use our custom CodeBlock component for 'code' type
-    // You can add more custom types here, for example, for images within Portable Text:
+    // Custom block types from Sanity schema
+    faq: ({ value }) => <FAQBlock value={value} />,
+    callout: ({ value }) => <CalloutBlock value={value} />,
+    customCode: ({ value }) => <CustomCodeBlock value={value} />,
+    // Image handling
     image: ({ value }: { value: ResolvedSanityImage & { alt?: string; caption?: string } }) => { // Use the imported type, add alt/caption
       if (!value?.asset?.url) { // Check for a property that exists on a resolved asset, like URL or _id
         return null;
@@ -30,7 +36,6 @@ export const ptComponents: PortableTextComponents = {
         </figure>
       );
     },
-    // Add other custom block types if you have them in your Sanity schema
   },
   block: {
     // Customize rendering of standard block types like h1, h2, p, blockquote
@@ -48,9 +53,9 @@ export const ptComponents: PortableTextComponents = {
       const rel = !value.href.startsWith('/') ? 'noreferrer noopener' : undefined;
       const target = !value.href.startsWith('/') ? '_blank' : undefined;
       return (
-        <Link href={value.href} rel={rel} target={target} className="text-blue-500 hover:underline dark:text-blue-400">
+        <a href={value.href} rel={rel} target={target} className="text-blue-500 hover:underline dark:text-blue-400">
           {children}
-        </Link>
+        </a>
       );
     },
     strong: ({children}) => <strong className="font-bold">{children}</strong>,

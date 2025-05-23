@@ -17,6 +17,33 @@ export interface PostImage extends Omit<SanityImageType, 'asset' | 'crop' | 'hot
   hotspot?: ImageHotspot;
 }
 
+// Custom content type interfaces
+export interface FAQBlock {
+  _type: 'faq';
+  _key: string;
+  question: string;
+  answer: string;
+}
+
+export interface CalloutBlock {
+  _type: 'callout';
+  _key: string;
+  type: 'tip' | 'warning' | 'info' | 'success' | 'error';
+  title: string;
+  content: string;
+}
+
+export interface CustomCodeBlock {
+  _type: 'customCode';
+  _key: string;
+  code: string;
+  language?: string;
+  filename?: string;
+}
+
+// Extended Portable Text block that includes custom types
+export type ExtendedPortableTextBlock = PortableTextBlock | FAQBlock | CalloutBlock | CustomCodeBlock;
+
 export interface Author {
   name?: string | null;
   image?: SanityImageType | null; // Assuming author might have an image
@@ -31,7 +58,7 @@ export interface Post {
   coverImage?: PostImage | null; // Use the new strict type for coverImage
   publishedAt?: string | null;
   excerpt?: string | null;
-  body?: PortableTextBlock[]; // Use PortableTextBlock for type safety
+  body?: ExtendedPortableTextBlock[]; // Use extended type for custom blocks
   // Add other fields like categories if you fetch them
   // categories?: Category[]; 
 }

@@ -23,7 +23,33 @@ async function getPost(slug: string): Promise<Post | null> {
     },
     publishedAt,
     excerpt, // Fetch excerpt
-    body
+    body[]{
+      ...,
+      _type == "image" => {
+        ...,
+        asset->
+      },
+      _type == "faq" => {
+        _key,
+        _type,
+        question,
+        answer
+      },
+      _type == "callout" => {
+        _key,
+        _type,
+        type,
+        title,
+        content
+      },
+      _type == "customCode" => {
+        _key,
+        _type,
+        code,
+        language,
+        filename
+      }
+    }
   }`;
   const post = await client.fetch<Post | null>(query, { slug });
   return post;
@@ -96,6 +122,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     notFound(); // Triggers 404 page if post not found
   }
 
+  // Debug: Log the body content to console
+  if (post.body) {
+    console.log('Post body content:', JSON.stringify(post.body, null, 2));
+  }
+
   return (
     <article className="container mx-auto px-4 py-8 max-w-3xl">
       <Link href="/" className="text-blue-500 hover:underline mb-6 inline-block">
@@ -129,7 +160,6 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
       {post.body ? (
         <div className="prose dark:prose-invert max-w-none">
-          {/* PortableText component will go here, needs custom components for styling */}
           <PortableText value={post.body} components={ptComponents} />
         </div>
       ) : (
