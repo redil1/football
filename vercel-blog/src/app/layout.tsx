@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Football Events Blog",
   description: "The latest news, analysis, and insights on football events from around the world.",
+  verification: {
+    google: "lOitW-rTdEV6dxpAUVAp-2UbEF8ktYAvQ2mwc4XI3E8",
+  },
 };
 
 export default function RootLayout({
